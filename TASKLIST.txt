@@ -1,0 +1,17 @@
+publish file checklist before exporting:
+	
+
+
+TASKLIST:
+	- create publish system:
+		(that program has to make those verifications):
+			removing references (import from references)
+			delete all the namespaces
+			export a new file (with _publish in the end)
+			delete unuesed nodes, checking places for controllers
+			delete globalAggregate from renderman
+	- finish the udim detection system
+		implement the mudbox udim nomenclature (borring)
+	- create a feature for the 'USE EXISTING SHADER' button to 
+		be able to create masks with layer mixer
+	- finish the log notification system

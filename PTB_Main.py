@@ -45,21 +45,25 @@ if exist != True:
 	exit()
 os.chdir(__folder__)
 
-try:
-	from PyToolBar_03.Modules.RigM import RigApplication
-	from PyToolBar_03.Modules.RenderM import RenderApplication
-	from PyToolBar_03.Modules.AnimM import AnimApplication
-	from PyToolBar_03.Modules.ProjectM import ProjectApplication
-	print("Modules loaded")
-except:
+
+
+from PyToolBar_03.Modules.PipelineShaderM import PipelineShaderApplication
+from PyToolBar_03.Modules.PipelineManagerM import PipelineGuiApplication
+from PyToolBar_03.Modules.PipelineM import PipelineApplication
+from PyToolBar_03.Modules.RigM import RigApplication
+from PyToolBar_03.Modules.RenderM import RenderApplication
+from PyToolBar_03.Modules.AnimM import AnimApplication
+from PyToolBar_03.Modules.ProjectM import ProjectApplication
+print("Modules loaded")
+"""except:
 	mc.error("Module not found or impossible to import!")
 	sys.exit()
+"""
 
 
 
 
-
-class GuiApplication(RigApplication, RenderApplication, AnimApplication, ProjectApplication):
+class GuiApplication(RigApplication, RenderApplication, AnimApplication, ProjectApplication, PipelineGuiApplication, PipelineShaderApplication, PipelineApplication):
 	def __init__(self):
 		#check if the module list file exist
 		self.project = mc.workspace(query=True, rd=True)
@@ -72,10 +76,16 @@ class GuiApplication(RigApplication, RenderApplication, AnimApplication, Project
 
 
 
-		self.window_width = 310
+		self.window_width = 410
+		self.window_height=700
 
 		letter = 'abcdefghijklmnopqrstuvwxyz'
 		figure = '0123456789'
+
+		self.list_letter = list(letter)
+		self.list_capital = list(letter.upper())
+		self.list_figure = list(figure)
+		
 		self.folder_path = os.getcwd()
 
 
@@ -162,6 +172,66 @@ class GuiApplication(RigApplication, RenderApplication, AnimApplication, Project
 
 
 
+		#pipelinemanager
+		self.log_list_content = []
+		self.settings = {}
+
+		self.texture_to_connect_list = []
+		#load settings stored in files
+		#if the file doesn't exist
+		#create a new file with default settings
+		#check the current project of maya
+
+		if os.path.isfile("Data/PipelineData.dll")==True:
+			try:
+				with open("Data/PipelineData.dll", "rb") as read_file:
+					self.project_path = pickle.load(read_file)
+			except:
+				mc.error("Impossible to read the pipeline data file!")
+				self.project_path = "None"
+		else:
+			self.project_path = "None"
+
+		#launch the function that check
+		#if the shader settings file exists
+		#if it doesn't create it
+		self.shader_init_function()
+
+
+		try:
+			self.settings, self.settings_dictionnary = self.load_settings_function()
+			self.add_log_content_function("Settings loaded")
+		except:
+			mc.warning("Impossible to create setting file!")
+			"""
+			self.settings, self.settings_dictionnary = self.create_pipeline_settings_function()
+			self.add_log_content_function("Settings created")
+			"""
+		#launch the main interface of the program
+
+		#IMPORTANTS VARIABLES
+		self.receive_notification = True
+		self.message_thread_status = True
+		self.window_name = None
+
+
+		self.file_type = ["geo", "rig", "groom", "cloth", "lookdev", "layout", "camera", "anim", "render", "compositing"]
+		self.variable_list = ["[key]", "[project]", "[type]", "[state]", "[version]", "[sqversion]", "[shversion]"]
+		self.default_folder_list = []
+		self.new_step_list = []
+		self.new_type_list = []
+		self.name_list_value = []
+		self.type_list_value = []
+		self.file_list_value = []
+		self.result_list_value = []
+		self.previous_log_team = []
+		self.launch_message_thread = False
+
+
+
+
+
+
 
 		#referenced lights tool
 		self.list_referenced_files = []
@@ -188,6 +258,22 @@ class GuiApplication(RigApplication, RenderApplication, AnimApplication, Project
 		self.main_interface()
 
 
+	def letter_verification_function(self, content):
+		if content=="":
+			return False
+		content = list(content)
+		i = 0
+
+		while i < len(content):
+			if (content[i] in self.list_letter)==True or (content[i] in self.list_capital)==True or (content[i] in self.list_figure)==True:
+				return True
+			else:
+				if i==(len(content) - 1):
+					mc.error("TextField Error, you have to enter something!")
+					return False
+				else:
+					i+=1
+
 
 	def main_interface(self):
 		"""
@@ -198,13 +284,13 @@ class GuiApplication(RigApplication, RenderApplication, AnimApplication, Project
 
 		checkbox allow them to be visible
 		"""
-		self.main_window = mc.window(sizeable=False, title="PyToolBar [03] By Quazar", width=self.window_width, height=500, menuBar=True)
+		self.main_window = mc.window(sizeable=True, title="PyToolBar [03] By Quazar", width=self.window_width, height=self.window_height, menuBar=True)
 
 		#menubar containing checkbox to enable
 		self.menubar = mc.menu(label="Tool List")
 
 		#creation of the scrollbar in the main window
-		self.scrollbar = mc.scrollLayout(width=self.window_width + 40, parent=self.main_window)
+		self.scrollbar = mc.scrollLayout(width=self.window_width + 40, parent=self.main_window, resizeCommand=self.resize_command_function)
 		self.main_column = mc.columnLayout(adjustableColumn=True, parent=self.scrollbar)
 		mc.separator(style="singleDash", height=5)
 
