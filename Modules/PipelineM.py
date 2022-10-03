@@ -136,7 +136,7 @@ class PipelineApplication:
 		setting_key_list = []
 		setting_value_list = []
 		setting_default_folder_list = []
-		setting_keyword_list = []
+		setting_keyword_list = [] 
 
 		for setting_key, setting_value in self.settings.items():
 
